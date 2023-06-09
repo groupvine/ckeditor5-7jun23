@@ -203,7 +203,8 @@
     "packages/*/build/**",
     "packages/*/src/lib/**",
     "coverage/**",
-    "external/**"
+    "external/**",
+    "packages/ckeditor5-build-classic/**"
   ],
   "workspaces": {
     "packages": [
