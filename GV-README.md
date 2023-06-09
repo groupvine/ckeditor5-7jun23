@@ -37,14 +37,21 @@ E.g., in browser, if in ~/gv/tmp/ckeditor5-7jun23, go
 [here](file:///Users/dave/gv/tmp/ckeditor5-7jun23/packages/ckeditor5-build-classic/sample/index.html).
 
 
-### Ignore ckeditor5-build-classic in eslint
+### Base package.json mods
 
-Add to base packages.json:
+Ignore ckeditor5-build-classic in eslint
+
 ```
   "eslintIgnore": [
      ...
     "packages/ckeditor5-build-classic/**"
   ],
+```
+
+Remove postinstall:
+
+```
+    "postinstall:old": "node ./scripts/postinstall.js",
 ```
 
 
