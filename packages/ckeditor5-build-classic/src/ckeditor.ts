@@ -158,6 +158,10 @@ ClassicEditor.defaultConfig = {
             ]
         },
 
+        link: {
+            defaultProtocol: 'http://'
+        },
+
         htmlEmbed: {
             showPreviews: true,
             sanitizeHtml: (inputHtml:string) => {
