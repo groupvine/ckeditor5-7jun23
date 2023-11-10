@@ -206,7 +206,7 @@ export default class UpcastHelpers extends ConversionHelpers<UpcastDispatcher> {
 	 * <div class="dark"><div>foo</div></div>    -->    <div dark="true"><div>foo</div></div>
 	 * ```
 	 *
-	 * Above, `class="dark"` attribute is added only to the `<div>` elements that has it. This is in contrary to
+	 * Above, `class="dark"` attribute is added only to the `<div>` elements that has it. This is in contrast to
 	 * {@link module:engine/conversion/upcasthelpers~UpcastHelpers#elementToAttribute} which sets attributes for
 	 * all the children in the model:
 	 *
@@ -790,8 +790,8 @@ function upcastDataToMarker( config: {
 		//
 		// This hack probably would not be needed if attributes are upcasted separately.
 		//
-		const basePriority = priorities.get( 'low' );
-		const maxPriority = priorities.get( 'highest' );
+		const basePriority = priorities.low;
+		const maxPriority = priorities.highest;
 		const priorityFactor = priorities.get( config.converterPriority ) / maxPriority; // Number in range [ -1, 1 ].
 
 		dispatcher.on<UpcastElementEvent>(

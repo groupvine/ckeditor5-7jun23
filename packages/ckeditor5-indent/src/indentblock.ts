@@ -41,8 +41,8 @@ export default class IndentBlock extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'IndentBlock' {
-		return 'IndentBlock';
+	public static get pluginName() {
+		return 'IndentBlock' as const;
 	}
 
 	/**
@@ -125,7 +125,12 @@ export default class IndentBlock extends Plugin {
 			},
 			model: {
 				key: 'blockIndent',
-				value: ( viewElement: ViewElement ) => viewElement.getStyle( marginProperty )
+				value: ( viewElement: ViewElement ) => {
+					// Do not indent block elements in Document Lists. See https://github.com/ckeditor/ckeditor5/issues/12466.
+					if ( !viewElement.is( 'element', 'li' ) ) {
+						return viewElement.getStyle( marginProperty );
+					}
+				}
 			}
 		} );
 

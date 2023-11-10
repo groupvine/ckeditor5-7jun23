@@ -127,8 +127,8 @@ export default class TableColumnResizeEditing extends Plugin {
 	/**
 	 * @inheritDoc
 	 */
-	public static get pluginName(): 'TableColumnResizeEditing' {
-		return 'TableColumnResizeEditing';
+	public static get pluginName() {
+		return 'TableColumnResizeEditing' as const;
 	}
 
 	/**
@@ -146,6 +146,7 @@ export default class TableColumnResizeEditing extends Plugin {
 		this.on<ObservableChangeEvent<boolean>>( 'change:_isResizingAllowed', ( evt, name, value ) => {
 			// Toggling the `ck-column-resize_disabled` class shows and hides the resizers through CSS.
 			const classAction = value ? 'removeClass' : 'addClass';
+
 			editor.editing.view.change( writer => {
 				for ( const root of editor.editing.view.document.roots ) {
 					writer[ classAction ]( 'ck-column-resize_disabled', editor.editing.view.document.getRoot( root.rootName )! );
@@ -245,7 +246,7 @@ export default class TableColumnResizeEditing extends Plugin {
 
 		this.editor.model.schema.register( 'tableColumn', {
 			allowIn: 'tableColumnGroup',
-			allowAttributes: [ 'columnWidth' ],
+			allowAttributes: [ 'columnWidth', 'colSpan' ],
 			isLimit: true
 		} );
 	}
@@ -417,7 +418,9 @@ export default class TableColumnResizeEditing extends Plugin {
 				value: ( viewElement: ViewElement ) => {
 					const viewColWidth = viewElement.getStyle( 'width' );
 
-					if ( !viewColWidth || !viewColWidth.endsWith( '%' ) ) {
+					// 'pt' is the default unit for table column width pasted from MS Office.
+					// See https://github.com/ckeditor/ckeditor5/issues/14521#issuecomment-1662102889 for more details.
+					if ( !viewColWidth || ( !viewColWidth.endsWith( '%' ) && !viewColWidth.endsWith( 'pt' ) ) ) {
 						return 'auto';
 					}
 
@@ -425,6 +428,18 @@ export default class TableColumnResizeEditing extends Plugin {
 				}
 			}
 		} );
+
+		// The `col[span]` attribute is present in tables pasted from MS Excel. We use it to set the temporary `colSpan` model attribute,
+		// which is consumed during the `colgroup` element upcast.
+		// See https://github.com/ckeditor/ckeditor5/issues/14521#issuecomment-1662102889 for more details.
+		conversion.for( 'upcast' ).attributeToAttribute( {
+			view: {
+				name: 'col',
+				key: 'span'
+			},
+			model: 'colSpan'
+		} );
+
 		conversion.for( 'downcast' ).attributeToAttribute( {
 			model: {
 				name: 'tableColumn',

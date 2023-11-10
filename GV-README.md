@@ -116,6 +116,15 @@ Commit and push any local changes
 
 ### Fetch latest version
 
+If haven't set upstream, then might first need:
+
+```
+ git remote add  upstream https://github.com/ckeditor/ckeditor5.git
+```
+
+Then:
+
+
 ```
 git fetch upstream
 git merge upstream/stable

@@ -30,7 +30,6 @@ describe( 'SelectionObserver', () => {
 		domRoot.innerHTML = '<div contenteditable="true"></div><div contenteditable="true" id="additional"></div>';
 		domMain = domRoot.childNodes[ 0 ];
 		domDocument.body.appendChild( domRoot );
-
 		view = new View( new StylesProcessor() );
 		viewDocument = view.document;
 		createViewRoot( viewDocument );
@@ -104,6 +103,25 @@ describe( 'SelectionObserver', () => {
 		changeDomSelection();
 	} );
 
+	// See https://github.com/ckeditor/ckeditor5/issues/14569.
+	it( 'should call focusObserver#flush when selection is in the editable but not changed', () => {
+		// Set DOM selection.
+		changeDomSelection();
+
+		// Update view selection to match DOM selection.
+		const domSelection = domDocument.getSelection();
+		const viewPosition = view.domConverter.domPositionToView( domSelection.focusNode, domSelection.focusOffset );
+
+		view.change( writer => writer.setSelection( viewPosition ) );
+
+		const flushSpy = testUtils.sinon.spy( selectionObserver.focusObserver, 'flush' );
+
+		// Fire selection change without actually moving selection.
+		domDocument.dispatchEvent( new Event( 'selectionchange' ) );
+
+		sinon.assert.calledOnce( flushSpy );
+	} );
+
 	it( 'should not fire selectionChange while user is composing', done => {
 		viewDocument.on( 'selectionChange', () => {
 			throw 'selectionChange fired while composing';
@@ -141,6 +159,25 @@ describe( 'SelectionObserver', () => {
 		} );
 
 		changeDomSelection();
+	} );
+
+	it( 'should detect "restricted objects" in Firefox DOM ranges and prevent an error being thrown', () => {
+		testUtils.sinon.stub( env, 'isGecko' ).value( true );
+
+		changeDomSelection();
+		domDocument.dispatchEvent( new Event( 'selectionchange' ) );
+
+		expect( view.hasDomSelection ).to.be.true;
+
+		const domFoo = domDocument.getSelection().anchorNode;
+
+		sinon.stub( domFoo, Symbol.toStringTag ).get( () => {
+			throw new Error( 'Permission denied to access property Symbol.toStringTag' );
+		} );
+
+		domDocument.dispatchEvent( new Event( 'selectionchange' ) );
+
+		expect( view.hasDomSelection ).to.be.false;
 	} );
 
 	it( 'should add only one #selectionChange listener to one document', done => {

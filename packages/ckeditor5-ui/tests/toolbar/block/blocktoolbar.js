@@ -6,6 +6,7 @@
 /* global document, window, Event */
 
 import ClassicTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/classictesteditor';
+import MultiRootEditor from '@ckeditor/ckeditor5-editor-multi-root/src/multirooteditor';
 
 import EditorUI from '../../../src/editorui/editorui';
 import BlockToolbar from '../../../src/toolbar/block/blocktoolbar';
@@ -21,13 +22,18 @@ import Image from '@ckeditor/ckeditor5-image/src/image';
 import ImageCaption from '@ckeditor/ckeditor5-image/src/imagecaption';
 import global from '@ckeditor/ckeditor5-utils/src/dom/global';
 import ResizeObserver from '@ckeditor/ckeditor5-utils/src/dom/resizeobserver';
+import DragDropBlockToolbar from '@ckeditor/ckeditor5-clipboard/src/dragdropblocktoolbar';
 
 import { setData } from '@ckeditor/ckeditor5-engine/src/dev-utils/model';
 import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard';
 import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
 
+import { icons } from '@ckeditor/ckeditor5-core';
+
 import Rect from '@ckeditor/ckeditor5-utils/src/dom/rect';
 import env from '@ckeditor/ckeditor5-utils/src/env';
+
+const { dragIndicator, pilcrow } = icons;
 
 describe( 'BlockToolbar', () => {
 	let editor, element, blockToolbar;
@@ -262,6 +268,99 @@ describe( 'BlockToolbar', () => {
 		describe( 'buttonView', () => {
 			it( 'should create a view instance', () => {
 				expect( blockToolbar.buttonView ).to.instanceof( BlockButtonView );
+			} );
+
+			it( 'should have default SVG icon', () => {
+				expect( blockToolbar.buttonView.icon ).to.be.equal( dragIndicator );
+			} );
+
+			it( 'should set predefined SVG icon provided in config', () => {
+				return ClassicTestEditor.create( element, {
+					plugins: [ BlockToolbar, Heading, HeadingButtonsUI, Paragraph, ParagraphButtonUI, BlockQuote ],
+					blockToolbar: {
+						items: [ 'paragraph', 'heading1', 'heading2', 'blockQuote' ],
+						icon: 'pilcrow'
+					}
+				} ).then( editor => {
+					const blockToolbar = editor.plugins.get( BlockToolbar );
+
+					expect( blockToolbar.buttonView.icon ).to.be.equal( pilcrow );
+
+					element.remove();
+
+					return editor.destroy();
+				} );
+			} );
+
+			it( 'should set string SVG icon provided in config', () => {
+				const icon = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960">' +
+					'<path d="M120-240v-80h720v80H120Zm0-200v-80h720v80H120Zm0-200v-80h720v80H120Z"/></svg>';
+				return ClassicTestEditor.create( element, {
+					plugins: [ BlockToolbar, Heading, HeadingButtonsUI, Paragraph, ParagraphButtonUI, BlockQuote ],
+					blockToolbar: {
+						items: [ 'paragraph', 'heading1', 'heading2', 'blockQuote' ],
+						icon
+					}
+				} ).then( editor => {
+					const blockToolbar = editor.plugins.get( BlockToolbar );
+
+					expect( blockToolbar.buttonView.icon ).to.be.equal( icon );
+
+					element.remove();
+
+					return editor.destroy();
+				} );
+			} );
+
+			it( 'should have simple label only for editing block', () => {
+				return ClassicTestEditor.create( element, {
+					plugins: [ BlockToolbar, Heading, HeadingButtonsUI, Paragraph, ParagraphButtonUI, BlockQuote ],
+					blockToolbar: {
+						items: [ 'paragraph', 'heading1', 'heading2', 'blockQuote' ]
+					}
+				} ).then( editor => {
+					const blockToolbar = editor.plugins.get( BlockToolbar );
+
+					expect( blockToolbar.buttonView.label ).to.be.equal( 'Edit block' );
+
+					element.remove();
+
+					return editor.destroy();
+				} );
+			} );
+
+			it( 'should have extended label when `DragDropBlockToolbar` is enabled ', () => {
+				return ClassicTestEditor.create( element, {
+					plugins: [ BlockToolbar, Heading, HeadingButtonsUI, Paragraph, ParagraphButtonUI, BlockQuote, DragDropBlockToolbar ],
+					blockToolbar: {
+						items: [ 'paragraph', 'heading1', 'heading2', 'blockQuote' ]
+					}
+				} ).then( editor => {
+					const blockToolbar = editor.plugins.get( BlockToolbar );
+
+					expect( blockToolbar.buttonView.label ).to.be.equal( 'Click to edit block\nDrag to move' );
+
+					element.remove();
+
+					return editor.destroy();
+				} );
+			} );
+
+			it( 'should have custom tooltip CSS class', () => {
+				return ClassicTestEditor.create( element, {
+					plugins: [ BlockToolbar, Heading, HeadingButtonsUI, Paragraph, ParagraphButtonUI, BlockQuote, DragDropBlockToolbar ],
+					blockToolbar: {
+						items: [ 'paragraph', 'heading1', 'heading2', 'blockQuote' ]
+					}
+				} ).then( editor => {
+					const blockToolbar = editor.plugins.get( BlockToolbar );
+
+					expect( blockToolbar.buttonView.element.dataset.ckeTooltipClass ).to.be.equal( 'ck-tooltip_multi-line' );
+
+					element.remove();
+
+					return editor.destroy();
+				} );
 			} );
 
 			it( 'should be added to the editor ui.view.body collection', () => {
@@ -760,6 +859,96 @@ describe( 'BlockToolbar', () => {
 			blockToolbar.destroy();
 
 			sinon.assert.calledOnce( destroySpy );
+		} );
+	} );
+
+	describe( 'multi-root integration', () => {
+		it( 'should not throw if there are not roots in the editor', () => {
+			return MultiRootEditor.create( {}, {
+				plugins: [ BlockToolbar, Heading, HeadingButtonsUI, Paragraph, ParagraphButtonUI, BlockQuote, Image, ImageCaption ],
+				blockToolbar: [ 'paragraph', 'heading1', 'heading2', 'blockQuote' ]
+			} ).then( newEditor => {
+				return newEditor.destroy();
+			} );
+		} );
+
+		it( 'should set a proper toolbar max-width based on selected editable', async () => {
+			const elFoo = document.createElement( 'div' );
+			elFoo.innerHTML = '<p>Foo</p>';
+			document.body.appendChild( elFoo );
+
+			const elBar = document.createElement( 'div' );
+			elBar.innerHTML = '<p>Bar</p>';
+			document.body.appendChild( elBar );
+
+			const multiRootEditor = await MultiRootEditor.create( { foo: elFoo, bar: elBar }, {
+				plugins: [ BlockToolbar, Heading, HeadingButtonsUI, Paragraph, ParagraphButtonUI, BlockQuote, Image, ImageCaption ],
+				blockToolbar: [ 'paragraph', 'heading1', 'heading2', 'blockQuote' ]
+			} );
+
+			blockToolbar = multiRootEditor.plugins.get( BlockToolbar );
+			multiRootEditor.ui.focusTracker.isFocused = true;
+
+			const viewFoo = multiRootEditor.ui.getEditableElement( 'foo' );
+			const viewBar = multiRootEditor.ui.getEditableElement( 'bar' );
+
+			testUtils.sinon.stub( viewFoo, 'getBoundingClientRect' ).returns( {
+				left: 100,
+				width: 200
+			} );
+
+			testUtils.sinon.stub( viewBar, 'getBoundingClientRect' ).returns( {
+				left: 100,
+				width: 300
+			} );
+
+			testUtils.sinon.stub( blockToolbar.buttonView.element, 'getBoundingClientRect' ).returns( {
+				left: 60,
+				width: 40
+			} );
+
+			// Starting, default value.
+			expect( blockToolbar.toolbarView.maxWidth ).to.equal( 'auto' );
+
+			multiRootEditor.model.change( writer => {
+				writer.setSelection( multiRootEditor.model.document.getRoot( 'foo' ).getChild( 0 ), 0 );
+			} );
+
+			// Fire the callback after the selection was moved to `foo` root.
+			resizeCallback( [ {
+				target: viewFoo
+			} ] );
+
+			// Expected value given the size of `foo` editable.
+			expect( blockToolbar.toolbarView.maxWidth ).to.equal( '240px' );
+
+			// Resize `bar` editable.
+			// It is not observed at the moment as the selection is in `foo` root.
+			// This callback should not affect the toolbar size.
+			resizeCallback( [ {
+				target: viewBar
+			} ] );
+
+			// Expected value same as previously.
+			expect( blockToolbar.toolbarView.maxWidth ).to.equal( '240px' );
+
+			// Move selection to `bar` root.
+			multiRootEditor.model.change( writer => {
+				writer.setSelection( multiRootEditor.model.document.getRoot( 'bar' ).getChild( 0 ), 0 );
+			} );
+
+			// Resize `bar` editable.
+			resizeCallback( [ {
+				target: viewBar
+			} ] );
+
+			// Expected value given the size of `bar` editable.
+			expect( blockToolbar.toolbarView.maxWidth ).to.equal( '340px' );
+
+			elFoo.remove();
+			elBar.remove();
+
+			return multiRootEditor.destroy();
 		} );
 	} );
 } );

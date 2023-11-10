@@ -4,7 +4,7 @@
  */
 
 // The editor creator to use.
-import ClassicEditorBase from '@ckeditor/ckeditor5-editor-classic/src/classiceditor';
+import { ClassicEditor as ClassicEditorBase } from '@ckeditor/ckeditor5-editor-classic';
 
 // import UploadAdapter from '@ckeditor/ckeditor5-adapter-ckfinder/src/uploadadapter';
 // import { CKFinder } from '@ckeditor/ckeditor5-ckfinder';

@@ -2,6 +2,8 @@
 // instructions embedded in the content within the CKEditor (only
 // used for incoming emails or in layout templates)
 
+declare var require: any
+
 const $ = require( "jquery" );
 
 const urlParse = require('url-parse');

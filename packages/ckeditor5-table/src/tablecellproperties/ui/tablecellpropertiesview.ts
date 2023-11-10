@@ -21,7 +21,10 @@ import {
 	View,
 	ViewCollection,
 	type FocusableView,
-	type NormalizedColorOption
+	type NormalizedColorOption,
+	type ColorPickerConfig,
+	type FocusCyclerBackwardCycleEvent,
+	type FocusCyclerForwardCycleEvent
 } from 'ckeditor5/src/ui';
 import {
 	KeystrokeHandler,
@@ -59,6 +62,7 @@ export interface TableCellPropertiesViewOptions {
 	borderColors: Array<NormalizedColorOption>;
 	backgroundColors: Array<NormalizedColorOption>;
 	defaultTableCellProperties: TableCellPropertiesOptions;
+	colorPickerConfig: false | ColorPickerConfig;
 }
 
 /**
@@ -388,13 +392,24 @@ export default class TableCellPropertiesView extends View {
 			view: this
 		} );
 
+		// Maintain continuous focus cycling over views that have focusable children and focus cyclers themselves.
+		[ this.borderColorInput, this.backgroundInput ].forEach( view => {
+			view.fieldView.focusCycler.on<FocusCyclerForwardCycleEvent>( 'forwardCycle', evt => {
+				this._focusCycler.focusNext();
+				evt.stop();
+			} );
+
+			view.fieldView.focusCycler.on<FocusCyclerBackwardCycleEvent>( 'backwardCycle', evt => {
+				this._focusCycler.focusPrevious();
+				evt.stop();
+			} );
+		} );
+
 		[
 			this.borderStyleDropdown,
 			this.borderColorInput,
-			this.borderColorInput.fieldView.dropdownView.buttonView,
 			this.borderWidthInput,
 			this.backgroundInput,
-			this.backgroundInput.fieldView.dropdownView.buttonView,
 			this.widthInput,
 			this.heightInput,
 			this.paddingInput,
@@ -454,7 +469,8 @@ export default class TableCellPropertiesView extends View {
 		const colorInputCreator = getLabeledColorInputCreator( {
 			colorConfig: this.options.borderColors,
 			columns: 5,
-			defaultColorValue: defaultBorder.color
+			defaultColorValue: defaultBorder.color,
+			colorPickerConfig: this.options.colorPickerConfig
 		} );
 		const locale = this.locale;
 		const t = this.t!;
@@ -571,7 +587,8 @@ export default class TableCellPropertiesView extends View {
 		const colorInputCreator = getLabeledColorInputCreator( {
 			colorConfig: this.options.backgroundColors,
 			columns: 5,
-			defaultColorValue: this.options.defaultTableCellProperties.backgroundColor
+			defaultColorValue: this.options.defaultTableCellProperties.backgroundColor,
+			colorPickerConfig: this.options.colorPickerConfig
 		} );
 
 		const backgroundInput = new LabeledFieldView( locale, colorInputCreator );

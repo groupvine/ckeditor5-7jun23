@@ -375,7 +375,7 @@ export interface EditorConfig {
 	 *	* **Selecting an icon**
 	 *
 	 *		You can use one of the common icons provided by the editor (`'bold'`, `'plus'`, `'text'`, `'importExport'`, `'alignLeft'`,
-	 *		`'paragraph'`, `'threeVerticalDots'`):
+	 *		`'paragraph'`, `'threeVerticalDots'`, `'dragIndicator'`, `'pilcrow'`):
 	 *
 	 *		```ts
 	 *		{
@@ -640,6 +640,14 @@ export interface PoweredByConfig {
 	 * @default 5
 	 */
 	horizontalOffset: number;
+
+	/**
+	 * Allows to show the logo even if the valid commercial license is configured using
+	 * the {@link module:core/editor/editorconfig~EditorConfig#licenseKey `config.licenseKey`} setting.
+	 *
+	 * @default false
+	 */
+	forceVisible?: boolean;
 }
 
 /**

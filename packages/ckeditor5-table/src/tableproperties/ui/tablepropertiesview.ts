@@ -22,7 +22,10 @@ import {
 	ViewCollection,
 	type DropdownView,
 	type InputTextView,
-	type NormalizedColorOption
+	type NormalizedColorOption,
+	type ColorPickerConfig,
+	type FocusCyclerForwardCycleEvent,
+	type FocusCyclerBackwardCycleEvent
 } from 'ckeditor5/src/ui';
 import { FocusTracker, KeystrokeHandler, type ObservableChangeEvent, type Locale } from 'ckeditor5/src/utils';
 import { icons } from 'ckeditor5/src/core';
@@ -68,6 +71,11 @@ export interface TablePropertiesViewOptions {
 	 * The default table properties.
 	 */
 	defaultTableProperties: TablePropertiesOptions;
+
+	/**
+	 * The default color picker config.
+	 */
+	colorPickerConfig: false | ColorPickerConfig;
 }
 
 /**
@@ -352,13 +360,24 @@ export default class TablePropertiesView extends View {
 			view: this
 		} );
 
+		// Maintain continuous focus cycling over views that have focusable children and focus cyclers themselves.
+		[ this.borderColorInput, this.backgroundInput ].forEach( view => {
+			view.fieldView.focusCycler.on<FocusCyclerForwardCycleEvent>( 'forwardCycle', evt => {
+				this._focusCycler.focusNext();
+				evt.stop();
+			} );
+
+			view.fieldView.focusCycler.on<FocusCyclerBackwardCycleEvent>( 'backwardCycle', evt => {
+				this._focusCycler.focusPrevious();
+				evt.stop();
+			} );
+		} );
+
 		[
 			this.borderStyleDropdown,
 			this.borderColorInput,
-			this.borderColorInput!.fieldView.dropdownView.buttonView,
 			this.borderWidthInput,
 			this.backgroundInput,
-			this.backgroundInput!.fieldView.dropdownView.buttonView,
 			this.widthInput,
 			this.heightInput,
 			this.alignmentToolbar,
@@ -411,7 +430,8 @@ export default class TablePropertiesView extends View {
 		const colorInputCreator = getLabeledColorInputCreator( {
 			colorConfig: this.options.borderColors,
 			columns: 5,
-			defaultColorValue: defaultBorder.color
+			defaultColorValue: defaultBorder.color,
+			colorPickerConfig: this.options.colorPickerConfig
 		} );
 		const locale = this.locale;
 		const t = this.t!;
@@ -528,7 +548,8 @@ export default class TablePropertiesView extends View {
 		const backgroundInputCreator = getLabeledColorInputCreator( {
 			colorConfig: this.options.backgroundColors,
 			columns: 5,
-			defaultColorValue: this.options.defaultTableProperties.backgroundColor
+			defaultColorValue: this.options.defaultTableProperties.backgroundColor,
+			colorPickerConfig: this.options.colorPickerConfig
 		} );
 
 		const backgroundInput = new LabeledFieldView( locale, backgroundInputCreator );

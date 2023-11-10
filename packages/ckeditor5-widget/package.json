@@ -1,6 +1,6 @@
 {
   "name": "@ckeditor/ckeditor5-widget",
-  "version": "38.0.1",
+  "version": "40.0.0",
   "description": "Widget API for CKEditor 5.",
   "keywords": [
     "ckeditor",
@@ -11,36 +11,32 @@
   ],
   "main": "src/index.ts",
   "dependencies": {
-    "@ckeditor/ckeditor5-core": "^38.0.1",
-    "@ckeditor/ckeditor5-engine": "^38.0.1",
-    "@ckeditor/ckeditor5-enter": "^38.0.1",
-    "@ckeditor/ckeditor5-ui": "^38.0.1",
-    "@ckeditor/ckeditor5-utils": "^38.0.1",
-    "@ckeditor/ckeditor5-typing": "^38.0.1",
-    "lodash-es": "^4.17.15"
+    "@ckeditor/ckeditor5-core": "40.0.0",
+    "@ckeditor/ckeditor5-engine": "40.0.0",
+    "@ckeditor/ckeditor5-enter": "40.0.0",
+    "@ckeditor/ckeditor5-ui": "40.0.0",
+    "@ckeditor/ckeditor5-utils": "40.0.0",
+    "@ckeditor/ckeditor5-typing": "40.0.0",
+    "lodash-es": "4.17.21"
   },
   "devDependencies": {
-    "@ckeditor/ckeditor5-basic-styles": "^38.0.1",
-    "@ckeditor/ckeditor5-block-quote": "^38.0.1",
-    "@ckeditor/ckeditor5-clipboard": "^38.0.1",
-    "@ckeditor/ckeditor5-editor-balloon": "^38.0.1",
-    "@ckeditor/ckeditor5-editor-classic": "^38.0.1",
-    "@ckeditor/ckeditor5-essentials": "^38.0.1",
-    "@ckeditor/ckeditor5-heading": "^38.0.1",
-    "@ckeditor/ckeditor5-horizontal-line": "^38.0.1",
-    "@ckeditor/ckeditor5-image": "^38.0.1",
-    "@ckeditor/ckeditor5-link": "^38.0.1",
-    "@ckeditor/ckeditor5-media-embed": "^38.0.1",
-    "@ckeditor/ckeditor5-paragraph": "^38.0.1",
-    "@ckeditor/ckeditor5-table": "^38.0.1",
-    "@ckeditor/ckeditor5-undo": "^38.0.1",
+    "@ckeditor/ckeditor5-basic-styles": "40.0.0",
+    "@ckeditor/ckeditor5-block-quote": "40.0.0",
+    "@ckeditor/ckeditor5-clipboard": "40.0.0",
+    "@ckeditor/ckeditor5-editor-balloon": "40.0.0",
+    "@ckeditor/ckeditor5-editor-classic": "40.0.0",
+    "@ckeditor/ckeditor5-essentials": "40.0.0",
+    "@ckeditor/ckeditor5-heading": "40.0.0",
+    "@ckeditor/ckeditor5-horizontal-line": "40.0.0",
+    "@ckeditor/ckeditor5-image": "40.0.0",
+    "@ckeditor/ckeditor5-link": "40.0.0",
+    "@ckeditor/ckeditor5-media-embed": "40.0.0",
+    "@ckeditor/ckeditor5-paragraph": "40.0.0",
+    "@ckeditor/ckeditor5-table": "40.0.0",
+    "@ckeditor/ckeditor5-undo": "40.0.0",
     "typescript": "^4.8.4",
     "webpack": "^5.58.1",
     "webpack-cli": "^4.9.0"
-  },
-  "engines": {
-    "node": ">=16.0.0",
-    "npm": ">=5.7.1"
   },
   "author": "CKSource (http://cksource.com/)",
   "license": "GPL-2.0-or-later",
@@ -60,7 +56,6 @@
     "CHANGELOG.md"
   ],
   "scripts": {
-    "build": "tsc -p ./tsconfig.json",
-    "postversion": "npm run build"
+    "build": "tsc -p ./tsconfig.json"
   }
 }

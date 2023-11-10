@@ -7,11 +7,10 @@
  * @module ui/editorui/poweredby
  */
 
-import type { Editor } from '@ckeditor/ckeditor5-core';
+import type { Editor, UiConfig } from '@ckeditor/ckeditor5-core';
 import {
-	Rect,
 	DomEmitterMixin,
-	findClosestScrollableAncestor,
+	Rect,
 	verifyLicense,
 	type PositionOptions,
 	type Locale
@@ -22,7 +21,6 @@ import View from '../view';
 import { throttle, type DebouncedFunc } from 'lodash-es';
 
 import poweredByIcon from '../../theme/icons/project-logo.svg';
-import type { UiConfig } from '@ckeditor/ckeditor5-core/src/editor/editorconfig';
 
 const ICON_WIDTH = 53;
 const ICON_HEIGHT = 10;
@@ -31,14 +29,6 @@ const ICON_HEIGHT = 10;
 const NARROW_ROOT_HEIGHT_THRESHOLD = 50;
 const NARROW_ROOT_WIDTH_THRESHOLD = 350;
 const DEFAULT_LABEL = 'Powered by';
-const OFF_THE_SCREEN_POSITION = {
-	top: -99999,
-	left: -99999,
-	name: 'invalid',
-	config: {
-		withArrow: false
-	}
-};
 
 type PoweredByConfig = Required<UiConfig>[ 'poweredBy' ];
 
@@ -110,9 +100,10 @@ export default class PoweredBy extends DomEmitterMixin() {
 	 */
 	private _handleEditorReady(): void {
 		const editor = this.editor;
+		const forceVisible = !!editor.config.get( 'ui.poweredBy.forceVisible' );
 
 		/* istanbul ignore next -- @preserve */
-		if ( verifyLicense( editor.config.get( 'licenseKey' ) ) === 'VALID' ) {
+		if ( !forceVisible && verifyLicense( editor.config.get( 'licenseKey' ) ) === 'VALID' ) {
 			return;
 		}
 
@@ -148,7 +139,7 @@ export default class PoweredBy extends DomEmitterMixin() {
 	 * Creates an instance of the {@link module:ui/panel/balloon/balloonpanelview~BalloonPanelView balloon panel}
 	 * with the "powered by" view inside ready for positioning.
 	 */
-	private _createBalloonView() {
+	private _createBalloonView(): void {
 		const editor = this.editor;
 		const balloon = this._balloonView = new BalloonPanelView();
 		const poweredByConfig = getNormalizedConfig( editor );
@@ -168,7 +159,7 @@ export default class PoweredBy extends DomEmitterMixin() {
 	/**
 	 * Attempts to display the balloon with the "powered by" view.
 	 */
-	private _showBalloon() {
+	private _showBalloon(): void {
 		if ( !this._lastFocusedEditableElement ) {
 			return;
 		}
@@ -187,7 +178,7 @@ export default class PoweredBy extends DomEmitterMixin() {
 	/**
 	 * Hides the "powered by" balloon if already visible.
 	 */
-	private _hideBalloon() {
+	private _hideBalloon(): void {
 		if ( this._balloonView ) {
 			this._balloonView!.unpin();
 		}
@@ -312,18 +303,13 @@ function getLowerLeftCornerPosition( focusedEditableElement: HTMLElement, config
 function getLowerCornerPosition(
 	focusedEditableElement: HTMLElement,
 	config: PoweredByConfig,
-	getBalloonLeft: ( editableElementRect: Rect, balloonRect: Rect ) => number
+	getBalloonLeft: ( visibleEditableElementRect: Rect, balloonRect: Rect ) => number
 ) {
-	return ( editableElementRect: Rect, balloonRect: Rect ) => {
-		const visibleEditableElementRect = editableElementRect.getVisible();
-
-		// Root cropped by ancestors.
-		if ( !visibleEditableElementRect ) {
-			return OFF_THE_SCREEN_POSITION;
-		}
+	return ( visibleEditableElementRect: Rect, balloonRect: Rect ) => {
+		const editableElementRect = new Rect( focusedEditableElement );
 
 		if ( editableElementRect.width < NARROW_ROOT_WIDTH_THRESHOLD || editableElementRect.height < NARROW_ROOT_HEIGHT_THRESHOLD ) {
-			return OFF_THE_SCREEN_POSITION;
+			return null;
 		}
 
 		let balloonTop;
@@ -339,25 +325,18 @@ function getLowerCornerPosition(
 
 		const balloonLeft = getBalloonLeft( editableElementRect, balloonRect );
 
-		if ( config.position === 'inside' ) {
-			const newBalloonRect = balloonRect.clone().moveTo( balloonLeft, balloonTop );
+		// Clone the editable element rect and place it where the balloon would be placed.
+		// This will allow getVisible() to work from editable element's perspective (rect source).
+		// and yield a result as if the balloon was on the same (scrollable) layer as the editable element.
+		const newBalloonPositionRect = visibleEditableElementRect
+			.clone()
+			.moveTo( balloonLeft, balloonTop )
+			.getIntersection( balloonRect.clone().moveTo( balloonLeft, balloonTop ) )!;
 
-			// The watermark cannot be positioned in this corner because the corner is not quite visible.
-			if ( newBalloonRect.getIntersectionArea( visibleEditableElementRect ) < newBalloonRect.getArea() ) {
-				return OFF_THE_SCREEN_POSITION;
-			}
-		}
-		else {
-			const firstScrollableEditableElementAncestor = findClosestScrollableAncestor( focusedEditableElement );
+		const newBalloonPositionVisibleRect = newBalloonPositionRect.getVisible();
 
-			if ( firstScrollableEditableElementAncestor ) {
-				const firstScrollableEditableElementAncestorRect = new Rect( firstScrollableEditableElementAncestor );
-
-				// The watermark cannot be positioned in this corner because the corner is "not visible enough".
-				if ( visibleEditableElementRect.bottom + balloonRect.height / 2 > firstScrollableEditableElementAncestorRect.bottom ) {
-					return OFF_THE_SCREEN_POSITION;
-				}
-			}
+		if ( !newBalloonPositionVisibleRect || newBalloonPositionVisibleRect.getArea() < balloonRect.getArea() ) {
+			return null;
 		}
 
 		return {

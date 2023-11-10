@@ -35,7 +35,7 @@ describe( 'CKBoxCommand', () => {
 			// Header.
 			'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
 			// Payload.
-			btoa( JSON.stringify( { aud: 'environment' } ) ),
+			btoa( JSON.stringify( { auth: { ckbox: { workspaces: [ 'workspace1' ] } } } ) ),
 			// Signature.
 			'signature'
 		].join( '.' );
@@ -148,6 +148,14 @@ describe( 'CKBoxCommand', () => {
 
 	describe( 'events', () => {
 		describe( 'opening dialog ("ckbox:open")', () => {
+			beforeEach( () => {
+				sinon.useFakeTimers( { now: Date.now() } );
+			} );
+
+			afterEach( () => {
+				sinon.restore();
+			} );
+
 			it( 'should create a wrapper if it is not yet created and mount it in the document body', () => {
 				command.execute();
 
@@ -204,7 +212,6 @@ describe( 'CKBoxCommand', () => {
 						ignoreDataId: true,
 						language: 'es',
 						serviceOrigin: 'https://service.ckeditor.com',
-						assetsOrigin: 'https://assets.ckeditor.com',
 						tokenUrl: 'token-url',
 						unsupportedOption: 'bar'
 					}
@@ -222,7 +229,6 @@ describe( 'CKBoxCommand', () => {
 				expect( options ).to.have.property( 'theme', 'theme-01' );
 				expect( options ).to.have.property( 'language', 'es' );
 				expect( options ).to.have.property( 'serviceOrigin', 'https://service.ckeditor.com' );
-				expect( options ).to.have.property( 'assetsOrigin', 'https://assets.ckeditor.com' );
 				expect( options ).to.have.property( 'tokenUrl', 'token-url' );
 				expect( options ).to.not.have.property( 'defaultUploadCategories' );
 				expect( options ).to.not.have.property( 'ignoreDataId' );
@@ -280,7 +286,12 @@ describe( 'CKBoxCommand', () => {
 									width: 100,
 									height: 100
 								},
-								name: 'image1'
+								name: 'image1',
+								imageUrls: {
+									100: 'https://example.com/workspace1/assets/image-id1/images/100.webp',
+									default: 'https://example.com/workspace1/assets/image-id1/images/100.png'
+								},
+								url: 'https://example.com/workspace1/assets/image-id1/file'
 							}
 						},
 						{
@@ -292,7 +303,13 @@ describe( 'CKBoxCommand', () => {
 									width: 200,
 									height: 200
 								},
-								name: 'image2'
+								name: 'image2',
+								imageUrls: {
+									120: 'https://example.com/workspace1/assets/image-id2/images/120.webp',
+									200: 'https://example.com/workspace1/assets/image-id2/images/200.webp',
+									default: 'https://example.com/workspace1/assets/image-id2/images/200.png'
+								},
+								url: 'https://example.com/workspace1/assets/image-id2/file'
 							}
 						}
 					],
@@ -301,14 +318,16 @@ describe( 'CKBoxCommand', () => {
 							data: {
 								id: 'link-id1',
 								extension: 'pdf',
-								name: 'file1'
+								name: 'file1',
+								url: 'https://example.com/workspace1/assets/link-id1/file'
 							}
 						},
 						{
 							data: {
 								id: 'link-id2',
 								extension: 'zip',
-								name: 'file2'
+								name: 'file2',
+								url: 'https://example.com/workspace1/assets/link-id2/file'
 							}
 						}
 					]
@@ -360,11 +379,11 @@ describe( 'CKBoxCommand', () => {
 							id: 'image-id1',
 							type: 'image',
 							attributes: {
-								imageFallbackUrl: 'https://ckbox.cloud/environment/assets/image-id1/images/100.png',
+								imageFallbackUrl: 'https://example.com/workspace1/assets/image-id1/images/100.png',
 								imageSources: [
 									{
 										sizes: '(max-width: 100px) 100vw, 100px',
-										srcset: 'https://ckbox.cloud/environment/assets/image-id1/images/100.webp 100w',
+										srcset: 'https://example.com/workspace1/assets/image-id1/images/100.webp 100w',
 										type: 'image/webp'
 									}
 								],
@@ -375,13 +394,13 @@ describe( 'CKBoxCommand', () => {
 							id: 'image-id2',
 							type: 'image',
 							attributes: {
-								imageFallbackUrl: 'https://ckbox.cloud/environment/assets/image-id2/images/200.png',
+								imageFallbackUrl: 'https://example.com/workspace1/assets/image-id2/images/200.png',
 								imageSources: [
 									{
 										sizes: '(max-width: 200px) 100vw, 200px',
 										srcset:
-											'https://ckbox.cloud/environment/assets/image-id2/images/120.webp 120w,' +
-											'https://ckbox.cloud/environment/assets/image-id2/images/200.webp 200w',
+											'https://example.com/workspace1/assets/image-id2/images/120.webp 120w,' +
+											'https://example.com/workspace1/assets/image-id2/images/200.webp 200w',
 										type: 'image/webp'
 									}
 								],
@@ -392,7 +411,7 @@ describe( 'CKBoxCommand', () => {
 							id: 'link-id1',
 							type: 'link',
 							attributes: {
-								linkHref: 'https://ckbox.cloud/environment/assets/link-id1/file?download=true',
+								linkHref: 'https://example.com/workspace1/assets/link-id1/file?download=true',
 								linkName: 'file1'
 							}
 						},
@@ -400,7 +419,7 @@ describe( 'CKBoxCommand', () => {
 							id: 'link-id2',
 							type: 'link',
 							attributes: {
-								linkHref: 'https://ckbox.cloud/environment/assets/link-id2/file?download=true',
+								linkHref: 'https://example.com/workspace1/assets/link-id2/file?download=true',
 								linkName: 'file2'
 							}
 						}
@@ -508,7 +527,7 @@ describe( 'CKBoxCommand', () => {
 							'alt="" ' +
 							'ckboxImageId="image-id1" ' +
 							'sources="[object Object]" ' +
-							'src="https://ckbox.cloud/environment/assets/image-id1/images/100.png">' +
+							'src="https://example.com/workspace1/assets/image-id1/images/100.png">' +
 						'</imageInline>]' +
 					'</paragraph>'
 				);
@@ -521,11 +540,11 @@ describe( 'CKBoxCommand', () => {
 						sources: [
 							{
 								sizes: '(max-width: 100px) 100vw, 100px',
-								srcset: 'https://ckbox.cloud/environment/assets/image-id1/images/100.webp 100w',
+								srcset: 'https://example.com/workspace1/assets/image-id1/images/100.webp 100w',
 								type: 'image/webp'
 							}
 						],
-						src: 'https://ckbox.cloud/environment/assets/image-id1/images/100.png'
+						src: 'https://example.com/workspace1/assets/image-id1/images/100.png'
 					}
 				} );
 			} );
@@ -542,7 +561,7 @@ describe( 'CKBoxCommand', () => {
 						'alt="foo" ' +
 						'ckboxImageId="image-id2" ' +
 						'sources="[object Object]" ' +
-						'src="https://ckbox.cloud/environment/assets/image-id2/images/200.png">' +
+						'src="https://example.com/workspace1/assets/image-id2/images/200.png">' +
 					'</imageBlock>]'
 				);
 
@@ -555,12 +574,12 @@ describe( 'CKBoxCommand', () => {
 							{
 								sizes: '(max-width: 200px) 100vw, 200px',
 								srcset:
-									'https://ckbox.cloud/environment/assets/image-id2/images/120.webp 120w,' +
-									'https://ckbox.cloud/environment/assets/image-id2/images/200.webp 200w',
+									'https://example.com/workspace1/assets/image-id2/images/120.webp 120w,' +
+									'https://example.com/workspace1/assets/image-id2/images/200.webp 200w',
 								type: 'image/webp'
 							}
 						],
-						src: 'https://ckbox.cloud/environment/assets/image-id2/images/200.png'
+						src: 'https://example.com/workspace1/assets/image-id2/images/200.png'
 					}
 				} );
 			} );
@@ -578,7 +597,7 @@ describe( 'CKBoxCommand', () => {
 							'alt="" ' +
 							'ckboxImageId="image-id1" ' +
 							'sources="[object Object]" ' +
-							'src="https://ckbox.cloud/environment/assets/image-id1/images/100.png">' +
+							'src="https://example.com/workspace1/assets/image-id1/images/100.png">' +
 						'</imageInline>]' +
 					'</paragraph>'
 				);
@@ -591,11 +610,11 @@ describe( 'CKBoxCommand', () => {
 						sources: [
 							{
 								sizes: '(max-width: 100px) 100vw, 100px',
-								srcset: 'https://ckbox.cloud/environment/assets/image-id1/images/100.webp 100w',
+								srcset: 'https://example.com/workspace1/assets/image-id1/images/100.webp 100w',
 								type: 'image/webp'
 							}
 						],
-						src: 'https://ckbox.cloud/environment/assets/image-id1/images/100.png'
+						src: 'https://example.com/workspace1/assets/image-id1/images/100.png'
 					}
 				} );
 			} );
@@ -610,7 +629,7 @@ describe( 'CKBoxCommand', () => {
 						'foo' +
 						'[<$text ' +
 							'ckboxLinkId="link-id1" ' +
-							'linkHref="https://ckbox.cloud/environment/assets/link-id1/file?download=true">' +
+							'linkHref="https://example.com/workspace1/assets/link-id1/file?download=true">' +
 							'file1' +
 						'</$text>]' +
 					'</paragraph>'
@@ -618,7 +637,7 @@ describe( 'CKBoxCommand', () => {
 
 				expect( spy.callCount ).to.equal( 1 );
 				expect( spy.args[ 0 ][ 0 ] ).to.equal( 'link' );
-				expect( spy.args[ 0 ][ 1 ] ).to.equal( 'https://ckbox.cloud/environment/assets/link-id1/file?download=true' );
+				expect( spy.args[ 0 ][ 1 ] ).to.equal( 'https://example.com/workspace1/assets/link-id1/file?download=true' );
 			} );
 
 			it( 'should insert a link with selected content as a link name', () => {
@@ -632,7 +651,7 @@ describe( 'CKBoxCommand', () => {
 					'<paragraph>' +
 						'[<$text ' +
 							'ckboxLinkId="link-id1" ' +
-							'linkHref="https://ckbox.cloud/environment/assets/link-id1/file?download=true">' +
+							'linkHref="https://example.com/workspace1/assets/link-id1/file?download=true">' +
 							'foo' +
 						'</$text>]' +
 					'</paragraph>'
@@ -640,7 +659,7 @@ describe( 'CKBoxCommand', () => {
 
 				expect( spy.callCount ).to.equal( 1 );
 				expect( spy.args[ 0 ][ 0 ] ).to.equal( 'link' );
-				expect( spy.args[ 0 ][ 1 ] ).to.equal( 'https://ckbox.cloud/environment/assets/link-id1/file?download=true' );
+				expect( spy.args[ 0 ][ 1 ] ).to.equal( 'https://example.com/workspace1/assets/link-id1/file?download=true' );
 			} );
 
 			it( 'should use adjacent attributes for the inserted link', () => {
@@ -659,7 +678,7 @@ describe( 'CKBoxCommand', () => {
 						'[<$text ' +
 							'bold="true" ' +
 							'ckboxLinkId="link-id1" ' +
-							'linkHref="https://ckbox.cloud/environment/assets/link-id1/file?download=true">' +
+							'linkHref="https://example.com/workspace1/assets/link-id1/file?download=true">' +
 							'file1' +
 						'</$text>]' +
 					'</paragraph>'
@@ -667,7 +686,7 @@ describe( 'CKBoxCommand', () => {
 
 				expect( spy.callCount ).to.equal( 1 );
 				expect( spy.args[ 0 ][ 0 ] ).to.equal( 'link' );
-				expect( spy.args[ 0 ][ 1 ] ).to.equal( 'https://ckbox.cloud/environment/assets/link-id1/file?download=true' );
+				expect( spy.args[ 0 ][ 1 ] ).to.equal( 'https://example.com/workspace1/assets/link-id1/file?download=true' );
 			} );
 
 			it( 'should clear the adjacent "linkHref" attributes before inserting a link', () => {
@@ -688,7 +707,7 @@ describe( 'CKBoxCommand', () => {
 						'[<$text ' +
 							'bold="true" ' +
 							'ckboxLinkId="link-id1" ' +
-							'linkHref="https://ckbox.cloud/environment/assets/link-id1/file?download=true">' +
+							'linkHref="https://example.com/workspace1/assets/link-id1/file?download=true">' +
 							'file1' +
 						'</$text>]' +
 					'</paragraph>'
@@ -696,7 +715,7 @@ describe( 'CKBoxCommand', () => {
 
 				expect( spy.callCount ).to.equal( 1 );
 				expect( spy.args[ 0 ][ 0 ] ).to.equal( 'link' );
-				expect( spy.args[ 0 ][ 1 ] ).to.equal( 'https://ckbox.cloud/environment/assets/link-id1/file?download=true' );
+				expect( spy.args[ 0 ][ 1 ] ).to.equal( 'https://example.com/workspace1/assets/link-id1/file?download=true' );
 			} );
 
 			it( 'should clear the adjacent "linkHref" attributes before inserting an image', () => {
@@ -719,7 +738,7 @@ describe( 'CKBoxCommand', () => {
 							'bold="true" ' +
 							'ckboxImageId="image-id1" ' +
 							'sources="[object Object]" ' +
-							'src="https://ckbox.cloud/environment/assets/image-id1/images/100.png">' +
+							'src="https://example.com/workspace1/assets/image-id1/images/100.png">' +
 						'</imageInline>]' +
 					'</paragraph>'
 				);
@@ -732,11 +751,11 @@ describe( 'CKBoxCommand', () => {
 						sources: [
 							{
 								sizes: '(max-width: 100px) 100vw, 100px',
-								srcset: 'https://ckbox.cloud/environment/assets/image-id1/images/100.webp 100w',
+								srcset: 'https://example.com/workspace1/assets/image-id1/images/100.webp 100w',
 								type: 'image/webp'
 							}
 						],
-						src: 'https://ckbox.cloud/environment/assets/image-id1/images/100.png'
+						src: 'https://example.com/workspace1/assets/image-id1/images/100.png'
 					}
 				} );
 			} );
@@ -751,25 +770,25 @@ describe( 'CKBoxCommand', () => {
 						'foo' +
 						'<$text ' +
 							'ckboxLinkId="link-id1" ' +
-							'linkHref="https://ckbox.cloud/environment/assets/link-id1/file?download=true">' +
+							'linkHref="https://example.com/workspace1/assets/link-id1/file?download=true">' +
 							'file1' +
 						'</$text>' +
 						'<imageInline ' +
 							'alt="" ' +
 							'ckboxImageId="image-id1" ' +
 							'sources="[object Object]" ' +
-							'src="https://ckbox.cloud/environment/assets/image-id1/images/100.png">' +
+							'src="https://example.com/workspace1/assets/image-id1/images/100.png">' +
 						'</imageInline>' +
 						'<$text ' +
 							'ckboxLinkId="link-id2" ' +
-							'linkHref="https://ckbox.cloud/environment/assets/link-id2/file?download=true">' +
+							'linkHref="https://example.com/workspace1/assets/link-id2/file?download=true">' +
 							'file2' +
 						'</$text>' +
 						'[<imageInline ' +
 							'alt="foo" ' +
 							'ckboxImageId="image-id2" ' +
 							'sources="[object Object]" ' +
-							'src="https://ckbox.cloud/environment/assets/image-id2/images/200.png">' +
+							'src="https://example.com/workspace1/assets/image-id2/images/200.png">' +
 						'</imageInline>]' +
 					'</paragraph>'
 				);
@@ -791,25 +810,25 @@ describe( 'CKBoxCommand', () => {
 						'foo' +
 						'<$text ' +
 							'ckboxLinkId="link-id1" ' +
-							'linkHref="https://ckbox.cloud/environment/assets/link-id1/file?download=true">' +
+							'linkHref="https://example.com/workspace1/assets/link-id1/file?download=true">' +
 							'file1' +
 						'</$text>' +
 						'<$text ' +
 							'ckboxLinkId="link-id2" ' +
-							'linkHref="https://ckbox.cloud/environment/assets/link-id2/file?download=true">' +
+							'linkHref="https://example.com/workspace1/assets/link-id2/file?download=true">' +
 							'file2' +
 						'</$text>' +
 						'<imageInline ' +
 							'alt="" ' +
 							'ckboxImageId="image-id1" ' +
 							'sources="[object Object]" ' +
-							'src="https://ckbox.cloud/environment/assets/image-id1/images/100.png">' +
+							'src="https://example.com/workspace1/assets/image-id1/images/100.png">' +
 						'</imageInline>' +
 						'[<imageInline ' +
 							'alt="foo" ' +
 							'ckboxImageId="image-id2" ' +
 							'sources="[object Object]" ' +
-							'src="https://ckbox.cloud/environment/assets/image-id2/images/200.png">' +
+							'src="https://example.com/workspace1/assets/image-id2/images/200.png">' +
 						'</imageInline>]' +
 					'</paragraph>'
 				);
@@ -833,12 +852,12 @@ describe( 'CKBoxCommand', () => {
 						'foo' +
 						'<$text ' +
 							'ckboxLinkId="link-id1" ' +
-							'linkHref="https://ckbox.cloud/environment/assets/link-id1/file?download=true">' +
+							'linkHref="https://example.com/workspace1/assets/link-id1/file?download=true">' +
 							'file1' +
 						'</$text>' +
 						'[<$text ' +
 							'ckboxLinkId="link-id2" ' +
-							'linkHref="https://ckbox.cloud/environment/assets/link-id2/file?download=true">' +
+							'linkHref="https://example.com/workspace1/assets/link-id2/file?download=true">' +
 							'file2' +
 						'</$text>]' +
 					'</paragraph>'
@@ -863,13 +882,13 @@ describe( 'CKBoxCommand', () => {
 							'alt="" ' +
 							'ckboxImageId="image-id1" ' +
 							'sources="[object Object]" ' +
-							'src="https://ckbox.cloud/environment/assets/image-id1/images/100.png">' +
+							'src="https://example.com/workspace1/assets/image-id1/images/100.png">' +
 						'</imageInline>' +
 						'[<imageInline ' +
 							'alt="foo" ' +
 							'ckboxImageId="image-id2" ' +
 							'sources="[object Object]" ' +
-							'src="https://ckbox.cloud/environment/assets/image-id2/images/200.png">' +
+							'src="https://example.com/workspace1/assets/image-id2/images/200.png">' +
 						'</imageInline>]' +
 					'</paragraph>'
 				);
@@ -886,38 +905,6 @@ describe( 'CKBoxCommand', () => {
 
 				expect( command._chosenAssets.size ).to.equal( 0 );
 				expect( command._wrapper ).to.equal( null );
-			} );
-
-			it( 'should insert multiple assets (a link and an image) using custom `ckbox.assetsOrigin`', async () => {
-				const editor = await createTestEditor( {
-					ckbox: {
-						tokenUrl: 'foo',
-						assetsOrigin: 'https://cksource.com'
-					}
-				} );
-
-				const command = editor.commands.get( 'ckbox' );
-				const onChoose = command._prepareOptions().assets.onChoose;
-
-				onChoose( [ assets.links[ 0 ], assets.images[ 0 ] ] );
-
-				expect( getModelData( editor.model, { withoutSelection: true } ) ).to.equal(
-					'<paragraph>' +
-						'<$text ' +
-							'ckboxLinkId="link-id1" ' +
-							'linkHref="https://cksource.com/environment/assets/link-id1/file?download=true">' +
-							'file1' +
-						'</$text>' +
-						'<imageInline ' +
-							'alt="" ' +
-							'ckboxImageId="image-id1" ' +
-							'sources="[object Object]" ' +
-							'src="https://cksource.com/environment/assets/image-id1/images/100.png">' +
-						'</imageInline>' +
-					'</paragraph>'
-				);
-
-				await editor.destroy();
 			} );
 		} );
 	} );
